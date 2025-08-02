@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Моё хранилище</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 40px; }
+    .upload { margin: 20px auto; width: 300px; }
+    input, button { margin: 10px 0; padding: 10px; width: 100%; }
+    .link-box {
+      margin: 20px auto;
+      padding: 15px;
+      background: #f0f0f0;
+      width: 80%;
+      max-width: 500px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>📁 Загрузи файл</h1>
+  <div class="upload">
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Загрузить</button>
+  </div>
+
+  <div id="linkBox" class="link-box">
+    <p><strong>Файл загружен!</strong></p>
+    <input type="text" id="linkInput" readonly />
+    <button onclick="copyLink()">Копировать ссылку</button>
+    <button onclick="deleteFile()">Удалить файл</button>
+  </div>
+
+  <script>
+    async function uploadFile() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return alert("Выберите файл!");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        const link = `https://RobloxUserUsed.com/file/${data.filename}`;
+        document.getElementById("linkInput").value = link;
+        document.getElementById("linkBox").style.display = "block";
+        window.currentFile = data.filename;
+      } else {
+        alert("Ошибка: " + data.error);
+      }
+    }
+
+    function copyLink() {
+      const input = document.getElementById("linkInput");
+      input.select();
+      document.execCommand("copy");
+      alert("✅ Ссылка скопирована!");
+    }
+
+    async function deleteFile() {
+      if (!window.currentFile) return;
+      if (!confirm("Удалить файл?")) return;
+
+      const res = await fetch(`/delete/${window.currentFile}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (data.success) {
+        alert("🗑 Файл удалён");
+        document.getElementById("linkBox").style.display = "none";
+        window.currentFile = null;
+      }
+    }
+  </script>
+</body>
+</html>
